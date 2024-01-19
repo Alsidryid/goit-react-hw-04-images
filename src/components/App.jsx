@@ -1,88 +1,69 @@
-import { Component } from "react";
+ import { useEffect, useState } from "react";
 import { searcImages } from "../api/api";
 import Searchbar from './Searchbar/Searchbar'
 import ImageGallery from "./ImageGallery/ImageGallery";
-import Loader from "./Loader/Loader"
-import Button from './Button/Button'
+import Loader from "./Loader/Loader";
+import Button from './Button/Button';
 import Modal from "./Modal/Modal";
 
-export default class App extends Component{
-  state = {
-    search: '',
-    loading: false,
-    error: null,
-    images: [],
-    page: 1,
-    total: 0,
-    modalOpen: false,
-    imageDetails: {}
-  }
-  
-  async componentDidUpdate(_, prevState) {
-     const { search, page  } = this.state
-    if (search && (search !== prevState.search || page !== prevState.page)) {
-      this.fetchImages()
-    }}
 
-  async fetchImages() {
-    const { search, page  } = this.state
+const App = () => {
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [modalOpen, setModal] = useState(false);
+  const [imageDetails, setDetails] = useState({});
+
+
+  useEffect(() => {
+  const fetchImages = async  () =>  {
     try {
-          this.setState({
-          loading:true
-        })
-        const { data } = await searcImages(search, page)
-        this.setState(({ images}) => ({
-          images: data.hits?.length ? [...images, ...data.hits] : images,
-          total: data.totalHits
-        }))
+      setLoading(true);
+      const { data } = await searcImages(search, page)
+      setImages(prevImages => data.hits?.length ? [...prevImages, ...data.hits] : prevImages);
+      setTotal(data.totalHits)
       }
-      catch (error) {
-            this.setState({
-          error: error.message
-        })
+    catch (error) {
+      setError(error.message)
         }
       finally {
-          this.setState({
-          loading:false
-        })} 
-  }
-
-  handleSearch = ({ search }) => {
-    this.setState({
-      images: [],
-      page: 1,
-      total: 0,
-      search
-  })
-}
-
-  loadMore = () => {
-    this.setState(({page}) => ({page: page + 1}))
-  }
-  
-  showModal = (largeImageURL) => {
-    this.setState({
-      modalOpen: true,
-      imageDetails: {
-        largeImageURL,
-      }
-    })
-  }
-  
-  closeModal = () => {
-    this.setState({
-      modalOpen: false,
-      imageDetails: {
+      setLoading(false)
     }
-    })
+    }
+    if (search) {
+      fetchImages()
+    }
+}, [search, page] )
+
+
+  const  handleSearch = ({ search }) => {
+    setSearch(search);
+    setPage(1);
+    setTotal(0);
+    setImages([]);
+}
+  
+  const loadMore = () => setPage(prevPage => prevPage + 1);
+  
+  const showModal = (largeImageURL) => {
+    setModal(true);
+    setDetails({
+      largeImageURL,
+    });
+  }
+  
+  const closeModal = () => {
+    setModal(false);
+    setDetails({});
   }
 
-  render() {
-    
-    const { images,loading,error, total, modalOpen, imageDetails } = this.state;
-    const { handleSearch, loadMore, showModal,closeModal} = this;
-    const isImages = Boolean(images.length)
-    const isTotal = total !== images.length
+
+
+  const isImages = Boolean(images.length);
+  const isTotal = total !== images.length;
 
     return (
       <>
@@ -96,4 +77,4 @@ export default class App extends Component{
   )
 }
 
-}
+export default App
